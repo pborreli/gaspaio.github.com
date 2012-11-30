@@ -1,0 +1,636 @@
+<!doctype html>
+<html lang="en" xmlns="http://www.w3.org/1999/html" xmlns="http://www.w3.org/1999/html">
+
+ <head>
+  <meta charset="utf-8">
+
+  <title>Déployer du PHP avec Capistrano - PHP Tour Nantes 2012</title>
+
+  <meta name="description" content="XXXXX">
+  <meta name="author" content="Rodolfo Ripado">
+
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+
+  <link rel="stylesheet" href="css/reveal.min.css">
+  <link rel="stylesheet" href="css/theme/default.css" id="theme">
+    <link rel="stylesheet" href="css/style.css">
+
+  <!-- For syntax highlighting -->
+  <link rel="stylesheet" href="lib/css/zenburn.css">
+
+  <!-- If the query includes 'print-pdf', use the PDF print sheet -->
+  <script>
+   document.write( '<link rel="stylesheet" href="css/print/' + ( window.location.search.match( /print-pdf/gi ) ? 'pdf' : 'paper' ) + '.css" type="text/css" media="print">' );
+   document.write( '<link rel="stylesheet" href="css/' + ( window.location.search.match( /print-pdf/gi ) ? 'style-pdf' : 'style-paper' ) + '.css" type="text/css" media="print">' );
+  </script>
+
+  <!--[if lt IE 9]>
+  <script src="lib/js/html5shiv.js"></script>
+  <![endif]-->
+ </head>
+
+ <body>
+
+  <div class="reveal">
+
+   <!-- Any section element inside of this container is displayed as a slide -->
+    <div class="slides">
+
+      <!-- Cover -->
+      <section id='cover' class="cover">
+        <h1>Capistrano</h1>
+        <h3>Un outil pour déploier vos applications PHP</h3>
+        <p id="cover-footer">
+          <img src="assets/logo-highres-small.png" alt="logo-nantes" id="logo">
+          Rodolfo Ripado<br/>
+          <a href="mailto:rodolfo.ripado@alterway.fr">rodolfo.ripado@alterway.fr</a><br/>
+          <a href="http://twitter.com/gaspaio">@gaspaio</a>
+        </p>
+      </section>
+
+    <section id="whoami">
+     <h2>Rodolfo Ripado</h2>
+     <ul>
+       <li>Développeur PHP depuis 6 ans</li>
+       <li>Membre actif de la communauté Drupal</li>
+       <li>Son dada : l'Industrialisation/DevOps/Automation</li>
+       <li><em>Consultant Drupal chez Alter Way</em></li>
+     </ul>
+
+    </section>
+
+
+    <section>
+     <h2>Qu'est-ce que Capistrano ?</h2>
+     <ul>
+      <li>Moteur d'exécution de tâches à distance</li>
+            <li class="container"><ul>
+              <li>Connections via SSH</li>
+              <li>Execution en parallèle </li>
+            </ul></li>
+      <li>(S')écrit en ruby</li>
+      <li>Open-source (<a href="https://github.com/capistrano/capistrano">GitHub</a>)<br/>
+              et bien documenté (<a href="http://capistranorb.com">Capistranorb.com</a>)</li>
+    </ul>
+    <p class="transition"><em>Mais ... à quoi ça sert, en gros ?</em></p>
+    </section>
+
+    <section id="continousdep" class="imgslide">
+      <div>
+      <img src="assets/continuous-flow.jpg" alt="" class="bgdimg">
+      <h2>Déploiement Continu</h2>
+      </div>
+      <aside class="notes">
+        - déploiment : livrer l'ensemble de l'application ou des modifications sur un l'ensemble des machines<br/>
+        - en faire un non-événement : plusieurs fois par semaine, par jour<br/>
+        - condition : scripté => automatiser<br/>
+      </aside>
+    </section>
+
+
+    <section id="histoire" class="imgslide">
+     <h2><small><em>pour la petite histoire ...</em></small></h2>
+          <aside class="notes">
+- Crée par Jamis Buck  de 37 signals (Basecamp ... RoR) autour de 2005.<br />
+- Optimisé (au sens Ruby du terme) pour déployer des applications RoR.<br />
+- Jamis a publiquement quitté le projet en 2009.<br />
+- Il est maintenant maintenu par une communauté très active sur GitHub et un Google Group<br />
+- Il est maintenant plus indépendant de RoR et explicitement orienté vers le déploiment d'applications web <strong>en général</strong>
+            </aside>
+        </section>
+
+
+    <section>
+     <h2>Installer Capistrano : dépendances</h2>
+          <ul>
+            <li>Sur la machine locale :</li>
+       <li class='container'><ul>
+              <li>Ruby (incl. rubygems)</li>
+        <li>Client SSH</li>
+            </ul></li>
+            <li>Sur les machines cible :</li>
+       <li class='container'><ul>
+              <li>Server SSH (compatible OpenSSH)</li>
+        <li>Environnement <em>Linux-like</em></li>
+            </ul></li>
+     </ul>
+          <aside class="notes">
+            - Ruby Gems : gestionnaire de paquets pour Ruby (manière d'installer des applications packagées). Un peu comme pear chez nous.
+            - No ruby necessary on target machines.
+          </aside>
+    </section>
+
+
+    <section>
+     <h2>Installer Capistrano : sur Ubuntu</h2>
+          <p>
+            <img src="assets/installCapis.png" alt="Installer capistrano sur Ubuntu.">
+          </p>
+    </section>
+
+
+    <section>
+          <h2>Les concepts de base</h2>
+           <dl id="base-elements">
+             <div>
+               <dt>Capfile</dt>
+               <dd>Fichier de configuration avec la définition des tâches et leurs variables de configuration. Appelé aussi la "recipe".</dd>
+             </div>
+              <div>
+               <dt>Tâches</dt>
+               <dd>Un groupe d'actions.</dd>
+              </div>
+             <div>
+             <dt>Actions</dt>
+             <dd>Opérations à effectuer sur un ensemble de serveurs.</dd>
+             </div>
+             <div>
+             <dt>Rôles</dt>
+             <dd>Un groupe de serveurs.</dd>
+</div>
+<div>
+             <dt>Variables</dt>
+             <dd>Définissent les paramètres de connexion, les accès VCS, etc.</dd>
+</div>
+
+           </dl>
+    </section>
+
+
+    <section>
+     <h2>L'exemple habituel : Hello World!</h2>
+          <pre><code class="ruby">set :user, "vagrant"
+
+desc "My remote hello world task."
+task :hello_world, :hosts => ["misc.vt", "ddev.vt"] do
+  run "echo 'Hello World'"
+end</code></pre>
+          <p class="pic"><img src="assets/cap-helloworld.png" alt="Hello world example."></p>
+        </section>
+
+
+        <section>
+          <h2>Les variables</h2>
+          <p>Pour manipuler des variables :</p>
+          <pre>set(), unset(), exists(), ...
+          </pre>
+     <pre><code class="ruby"># This is ruby, so this :
+set :user, "vagrant"
+
+# is the same as this :
+set(:password, "vagrant")</code></pre>
+          <small></small>
+    </section>
+
+
+        <section>
+          <h2>Quelques unes des variables disponibles</h2>
+     <pre><code class="ruby"># SSH connection parameters
+set :user, "vagrant"
+set :password, "vagrant"
+
+set :ssh_options, {
+  'port': 8881,
+}
+
+set :default_environment, {
+  'ENVVAR' => 'somevalue',
+}
+
+# Set a gateway thought which to tunnel the connections
+set :gateway, "www.mygateway.org"</code></pre>
+          <small>Il y en a plein d'autres : <a href="https://github.com/capistrano/capistrano/wiki/2.x-Significant-Configuration-Variables">2.x Significant Configuration Variables</a></small>
+    </section>
+
+     <section>
+      <h2>Les <em>roles</em> et les <em>servers</em></h2>
+      <ul>
+        <li><code>role(name, *servers, attributes={}, &block)</code></li>
+        <li><code>server(host, *roles, attributes={})</code></li>
+      </ul>
+      <pre><code class="ruby">set :user, "vagrant"
+
+#Set 2 roles : web and db servers
+role :web, "server1.com", "server2.com"
+role :web, "server3.com", :master => true
+role :db, "server4.com", "server5.com"
+
+#Add a server to both roles
+server "server6.com", :db, :web
+
+desc "My remote hello world task on the master web server only."
+task :hello_world, :roles => :web, :only => {:master => true} do
+  run "echo 'Hello World'"
+end</code></pre>
+
+       <aside class="notes">WTF "*" ?</aside>
+     </section>
+
+
+    <section>
+      <h2>Les actions : exécution de commandes</h2>
+      <ul>
+        <li><code>run(cmd, options={}, &block)</code></li>
+        <li class="container"><ul>
+          <li>Execute <em>cmd</em> <strong>en parallèle</strong> sur un ensemble de serveurs<pre><code class="ruby">run "someCommand someParam", :roles => :web
+run "someCommand someParam", :once => true</code></pre></li>
+          <li>L'alternative <code>run_locally</code> permet d'exécuter une commande localement</li>
+        </ul></li>
+        <li><code>sudo(options={})</code></li>
+        <li class="container"><ul>
+          <li>Retourne une <em>string</em> pour composer des commandes <em>sudo</em><pre><code class="ruby">run "#{sudo :as => 'manuel'} someCommand someParam"</code></pre></li>
+        </ul></li>
+      </ul>
+
+    </section>
+
+
+    <section>
+      <h2>Les actions : transfert de données</h2>
+      <ul>
+        <li>
+          <code>put(data, path, options={})</code>
+          <pre><code class="ruby">put "file contents", "/etc/someapp/config", :roles => :web</code></pre>
+        </li>
+        <li class="fragment">
+          <code>get(from, to, options={}, &block)</code>
+          <pre><code class="ruby">get "/etc/someapp/config", "downloads/someapp_config"</code></pre>
+        </li>
+        <li class="fragment">
+          <code>upload(from, to, options={}, &block)</code>
+          <pre><code class="ruby">upload "data/someDir", "/var", :recursive => true</code></pre>
+        </li>
+        <li class="fragment">
+          <code>download(from, to, options={}, &block)</code>
+          <pre><code class="ruby">download "/var/someDir", "/data/someDir/$CAPISTRANO:HOST$"</code></pre>
+        </li>
+      </ul>
+
+      <aside class="notes">
+        - <strong>Put</strong> : transfert d'une chaîne de caractères vers plusieurs serveurs'.<br/>
+        - <strong>Get</strong> : transfert de fichier/répertoires depuis server unique.<br/>
+        - <strong>Upload</strong> : transfert de fichier/répertoires vers ensemble de serveurs.<br/>
+        - <strong>Download</strong> : transfert de fichier/répertoires depuis ensemble de serveurs.</p>
+      </aside>
+    </section>
+
+    <section>
+    <h2>Les tâches</h2>
+     <ul>
+       <li>
+         <code>task(name, options={}, &block)</code>
+         <pre><code class="ruby">desc "Saying hello is easy."
+task :hello_world, :roles => :web do
+  run "#{sudo} service apache2 stop"
+  run "#{sudo} service apache2 start"
+end</code></pre>
+       </li>
+       <li><code>before(task_name, *tasks, &block)</code></li>
+       <li>
+         <code>after(task_name, *tasks, &block)</code>
+         <pre><code class="ruby">after :hello_world, :myNameIs
+
+after :hello_world do
+  run "echo 'Goodbye all.'"
+end</code></pre>
+       </li>
+     </ul>
+    </section>
+
+    <section>
+    <h2>Les namespaces</h2>
+     <ul>
+       <li>
+         <code>namespace(name, &block)</code>
+       </li>
+     </ul>
+      <pre><code class="ruby"># Namespaces allow you to group your tasks
+namespace :deploy do
+  task :hello_world, :roles => :web do
+    #some commands
+  end
+end
+
+# You can reopen a namespace anytime. You can
+# override previously defined tasks and/or add new ones.
+namespace :deploy do
+  task :my_name_is, :roles => :web do
+    #some commands
+  end
+end</code></pre>
+    </section>
+
+    <section>
+      <h2 class="with-subtitle">Contrôle d'exécution<br/><small>Que fait-on si une commande échoue ?</small></h2>
+      <ul>
+        <li><code>transaction(&block)</code></li>
+        <li><code>on_rollback(&block)</code></li>
+       </ul>
+<pre><code class="ruby"># Tâche DEPLOY: Exécute toutes les tâches nécessaires pour
+# déployer une nouvelle version de l'application
+task :deploy do
+  transaction do
+    update_code
+  end
+end
+
+# Place une nouvelle version du code dans un nouveau répertoire
+task :update_code do
+  on_rollback do
+    run "rm -rf #{release_path}"
+  end
+  source.checkout(release_path)
+end</code></pre>
+    </section>
+
+    <section id="composants">
+      <h2>Les composants de nos <em>Recipes</em> :</h2>
+      <div>
+        <img src="assets/bricks.png" alt="Briques">
+        <ul>
+          <li>Variables de configuration</li>
+          <li>Serveurs, rôles, attributs</li>
+          <li>Actions</li>
+          <li>Transactions, Tâches, Namespaces</li>
+        </ul>
+      </div>
+     </section>
+
+
+    <section id="railsless-deploy">
+      <h2>Railsless-deploy</h2>
+      <h3>Une <em>recipe</em> générique de déploiement :</h3>
+        <ul>
+          <li>Installation via <em>Rubygems</em> :</li>
+          <li class="container"><img src="assets/railsless.png" alt="Railsless deploy"></li>
+          <li>Et dans note Capfile :</li>
+        </ul>
+        <pre><code class="ruby"># Include the alternative deploy recepy
+require 'rubygems'
+require 'railsless-deploy'
+
+# Custom definitions here</code></pre>
+     </section>
+
+
+    <section id="deploy-tasks">
+      <h2>Les tâches par défaut :</h2>
+
+      <pre class="console">user@server:~/cap -T
+[...]
+cap deploy               # Deploys your project.
+cap deploy:cleanup       # Clean up old releases.
+cap deploy:pending       # Displays the commits since your last deploy.
+cap deploy:pending:diff  # Displays the `diff' since your last deploy.
+cap deploy:rollback      # Rolls back to a previous version and restarts.
+cap deploy:rollback:code # Rolls back to the previously deployed version.
+cap deploy:setup         # Prepares one or more servers for deployment.
+cap deploy:symlink       # Updates the symlink to the most recently ...
+cap deploy:update        # Copies your project and updates the symlink.
+cap deploy:update_code   # Copies your project to the remote servers.
+[...]</pre>
+    </section>
+
+
+    <section id="deploy-algo">
+      <h2>Comment ça marche ?</h2>
+      <ul>
+        <li>Sur le(s) serveur(s) cible :</li>
+        <li class="container">
+          <pre class="console">[deploy_to]
+[deploy_to]/<strong>releases</strong>/20080819001122
+[deploy_to]/releases/20100819001122
+[deploy_to]/releases/...
+[deploy_to]/<strong>shared</strong>/...
+[deploy_to]/<strong>current</strong> -> [deploy_to]/releases/20100819001122</pre>
+        </li>
+        <li>Il faudra définir :</li>
+        <li class="container"><ul>
+          <li>La stratégie de déploiment</li>
+          <li>Le système de contrôle de version utilisé</li>
+          <li>Et un tas de petites choses ...</li>
+        </ul></li>
+      </ul>
+    </section>
+
+
+    <section id="deploy-example">
+      <h2>Un Capfile simple :</h2>
+        <pre><code class="ruby">require "rubygems"
+require "railsless-deploy"
+
+role :web, "webserver"
+
+set :user, "vagrant"
+
+# Required : used for all sorts of default values
+set :application, "MyApplication"
+
+# Requires : The repository from which to checkout the application code
+set :repository, "git://github.com/someone/somerepo"
+
+# The VCS identifiers
+set :scm, :git
+set :scm_user, "me"
+
+# The deployment strategy
+# Possible values : copy, checkout, export, remote_cache, ...
+set :deploy_via, :remote_cache
+set :copy_exclude, "someDir/nonWebData"
+
+# The deployment base directory
+set :deploy_to, "/var/www/#{application}"
+
+# How many old releases do we want to keep
+set :keep_releases, 3
+
+# Custom tasks
+namespace :deploy do
+  after "deploy:symlink", "deploy:someCustomTask"
+
+  desc "My custom task for my super-duper-project"
+  task :someCustomTask do
+    run "custom commands here"
+  end
+end</code></pre>
+
+      <aside class="notes">
+        <p>Copy : prepare code en local, compresse, transfert, décompresse</p>
+        <p>Checkout : un simple checkout (sur git, ça plante des clones partout)</p>
+        <p>Export : (sur git)comme checkout mais rm ensuite</p>
+        <p>RemoteCache : keep checkout, cp/rsync</p>
+      </aside>
+
+    </section>
+
+    <section id="demo" class="imgslide">
+      <h2>Démo !</h2>
+        </section>
+
+
+    <section id="webistrano">
+      <h2>L'interface web : <em>Webistrano</em></h2>
+      <img src="assets/webistrano.png">
+      <ul>
+        <li>Application RoR, installable via <em>bundler</em></li>
+        <li>Disponible sur GitHub : <a href="https://github.com/peritor/webistrano">https://github.com/peritor/webistrano</a></li>
+        <li>Comment faire : <a href="http://java.dzone.com/articles/web-application-deployment">Web Application Deployment<br />Using Webistrano and Capistrano</a></li>
+        <li>Utile mais ...</li>
+        <li class="container">
+          <ul>
+            <li>Très spécifique RoR.</li>
+            <li>Plus maintenue ?</li>
+          </ul>
+        </li>
+        <li>De nombreux forks "vivants" existent...</li>
+      </ul>
+    </section>
+
+
+    <section id="webistrano-alt">
+      <h2>Alternatives à <em>Webistrano</em></h2>
+      <ul>
+        <li>Strano</li>
+        <li class="container"><ul>
+          <li>Disponible sur <a href="https://github.com/joelmoss/strano">GitHub</a></li>
+          <li>Toujours en Ruby/RoR</li>
+          <li>Pour des déploiments à partir de Gitub</li>
+          <li>Plus d'infos : <a href="http://developwithstyle.com/strano">http://developwithstyle.com/strano</a></li>
+        </ul></li>
+        <li>Jenkins</li>
+          <li class="container"><ul>
+            <li>Envisageable si vous l'utilisez déjà pour l'IC de vos projets</li>
+          </ul></li>
+      </ul>
+    </section>
+
+
+
+    <section>
+      <h2>Extensions à <em>Capistrano</em></h2>
+      <ul>
+        <li>Capistrano Multistage</li>
+        <li class="container">
+          <ul>
+            <li>Définition de roles et serveurs par <em>stage</em></li>
+            <li class="container"><pre class="console">user@server:~/<strong>cap production deploy</strong></pre></li>
+            <li>Fait désormais partie de Capistrano.</li>
+          </ul>
+
+        </li>
+        <li>Capifony</li>
+        <li class="container"><ul>
+          <li>Installation via <em>Rubygems</em></li>
+          <li>Tâches, variables et répertoires conçus<br/>
+            pour déployer des projets Symfony 1 & 2.</li>
+          <li>Plus d'informations : <a href="http://capifony.org/">http://capifony.org/</a></li>
+        </ul></li>
+      </ul>
+
+      <aside class="notes">
+        <p>Capifony : Options : <code>:update_vendors</code>, partage des logs/uploads/..., </p>
+      </aside>
+
+    </section>
+
+    <section>
+      <h2>Extensions à <em>Capistrano</em></h2>
+      <ul>
+        <li>Drupal</li>
+        <li class="container"><ul>
+          <li>Disponible sur GitHub : <a href="https://github.com/gaspaio/Drupal-Capistrano-Deploy">https://github.com/gaspaio/Drupal-Capistrano-Deploy</a></li>
+          </ul></li>
+        <li>Et autres encore :</li>
+        <li class="container"><ul>
+          <li><a href="https://github.com/jadb/capcake">capcake</a></li>
+          <li><a href="https://github.com/vigetlabs/capistrano_rsync_with_remote_cache">capistrano_rsync_with_remote_cache</a></li>
+          <li><a href="hhttps://github.com/mydrive/capistrano-deploytags">capistrano-deploytags</a></li>
+          <li><a href="https://github.com/SciMed/capistrano-windows-server">capistrano-windows-server</a></li>
+        </ul></li>
+      </ul>
+    </section>
+
+
+    <section id="alternatives">
+      <h2>Vous n'aimez vraiment pas Ruby ? :-(</h2>
+      <ul>
+        <li id="fabric"><a href="http://docs.fabfile.org/en/1.5">Fabric</a><pre><code class="python">from fabric.api import env, run
+
+def set_hosts():
+    env.hosts = ['host1', 'host2']
+
+def mytask():
+    run('ls /var/www')</code></pre></li>
+        <li class="container"><ul>
+          <li>Une alternative solide, en Python.</li>
+          <li>Sur GitHub : <a href="https://github.com/fabric/fabric">https://github.com/fabric/fabric</a></li>
+        </ul></li>
+        <li><a href="https://github.com/rlerdorf/WePloy">Ploy & WePloy</a></li>
+        <li class="container"><ul>
+          <li>Crée par Rasmus Lerdorf pour les besoins de <a href="wepay.com">WePay</a>.</li>
+          <li>Clone simplifié de Capistrano en <strong>PHP</strong>.</li>
+          <li>Aucun commit fait depuis 2 ans.</li>
+        </ul></li>
+        <li>Et autres encore : <a href="http://controltier.org">Control Tier</a>, <a href="https://fedorahosted.org/func/">Func</a>, <a href="http://docs.puppetlabs.com/mcollective/">Mcollective</a></li>
+      </ul>
+
+      <aside class="notes">
+        Control Tier : si vous devez controler l'ordre des commandes, lancements conditionnels (si sur un serveur j'ai XX alors je fais YYY),...
+      </aside>
+
+    </section>
+
+
+    <section id="zeend">
+      <img src="assets/question.jpeg" alt="Question Lolcat">
+      <h2>Merci !</h2>
+      <h3>Des questions ?</h3>
+      <ul>
+        <li>Retrouver les slides : <a href="http://www.slideshare.net/rodolforipado">http://www.slideshare.net/rodolforipado</a></li>
+        <li>Me suivre : <a href="https://twitter.com/gaspaio">@gaspaio</a></li>
+        <li>Me joindre :
+          <ul>
+            <li><a href="mailto:rodolfo.ripado@alterway.fr">rodolfo.ripado@alterway.fr</a></li>
+            <li><a href="mailto:ggaspaio@gmail.com">ggaspaio@gmail.com</a></li>
+          </ul>
+        </li>
+      </ul>
+    </section>
+
+   </div>
+  </div>
+
+  <script src="lib/js/head.min.js"></script>
+  <script src="js/reveal.min.js"></script>
+
+  <script>
+
+   // Full list of configuration options available here:
+   // https://github.com/hakimel/reveal.js#configuration
+   Reveal.initialize({
+    controls: false,
+    progress: true,
+    history: true,
+    center: false,
+        overview: false,
+
+    theme: Reveal.getQueryHash().theme, // available themes are in /css/theme
+    transition: Reveal.getQueryHash().transition || 'linear', // default/cube/page/concave/zoom/linear/none
+
+    // Optional libraries used to extend on reveal.js
+    dependencies: [
+     { src: 'lib/js/classList.js', condition: function() { return !document.body.classList; } },
+     { src: 'plugin/markdown/showdown.js', condition: function() { return !!document.querySelector( '[data-markdown]' ); } },
+     { src: 'plugin/markdown/markdown.js', condition: function() { return !!document.querySelector( '[data-markdown]' ); } },
+     { src: 'plugin/highlight/highlight.js', async: true, callback: function() { hljs.initHighlightingOnLoad(); } },
+     { src: 'plugin/zoom-js/zoom.js', async: true, condition: function() { return !!document.body.classList; } },
+     { src: 'plugin/notes/notes.js', async: true, condition: function() { return !!document.body.classList; } }
+     // { src: 'plugin/remotes/remotes.js', async: true, condition: function() { return !!document.body.classList; } }
+    ]
+   });
+
+  </script>
+
+ </body>
+</html>
