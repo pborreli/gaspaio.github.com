@@ -86,11 +86,6 @@
         <img src="assets/continuous-flow.jpg" alt="" class="bgdimg">
         <h2>Déploiement Continu</h2>
       </div>
-      <aside class="notes">
-        - déploiment : livrer l'ensemble de l'application ou des modifications sur un l'ensemble des machines<br/>
-        - en faire un non-événement : plusieurs fois par semaine, par jour<br/>
-        - condition : scripté => automatiser<br/>
-      </aside>
     </section>
 
 
@@ -99,13 +94,6 @@
         <img src="assets/storyteller.jpg" alt="" class="bgdimg">
         <h2><small><em>pour la petite histoire ...</em></small></h2>
       </div>
-          <aside class="notes">
-- Crée par Jamis Buck  de 37 signals (Basecamp ... RoR) autour de 2005.<br />
-- Optimisé (au sens Ruby du terme) pour déployer des applications RoR.<br />
-- Jamis a publiquement quitté le projet en 2009.<br />
-- Il est maintenant maintenu par une communauté très active sur GitHub et un Google Group<br />
-- Il est maintenant plus indépendant de RoR et explicitement orienté vers le déploiment d'applications web <strong>en général</strong>
-            </aside>
         </section>
 
 
@@ -123,10 +111,6 @@
         <li>Environnement <em>Linux-like</em></li>
             </ul></li>
      </ul>
-          <aside class="notes">
-            - Ruby Gems : gestionnaire de paquets pour Ruby (manière d'installer des applications packagées). Un peu comme pear chez nous.
-            - No ruby necessary on target machines.
-          </aside>
     </section>
 
 
@@ -231,8 +215,6 @@ desc "My remote hello world task on the master web server only."
 task :hello_world, :roles => :web, :only => {:master => true} do
   run "echo 'Hello World'"
 end</code></pre>
-
-       <aside class="notes">WTF "*" ?</aside>
      </section>
 
 
@@ -274,13 +256,6 @@ run "someCommand someParam", :once => true</code></pre></li>
           <pre><code class="ruby">download "/var/someDir", "/data/someDir/$CAPISTRANO:HOST$"</code></pre>
         </li>
       </ul>
-
-      <aside class="notes">
-        - <strong>Put</strong> : transfert d'une chaîne de caractères vers plusieurs serveurs'.<br/>
-        - <strong>Get</strong> : transfert de fichier/répertoires depuis server unique.<br/>
-        - <strong>Upload</strong> : transfert de fichier/répertoires vers ensemble de serveurs.<br/>
-        - <strong>Download</strong> : transfert de fichier/répertoires depuis ensemble de serveurs.</p>
-      </aside>
     </section>
 
     <section>
@@ -329,21 +304,20 @@ namespace :deploy do
 end</code></pre>
     </section>
 
-    <section>
+    <section id="execution-control">
       <h2 class="with-subtitle">Contrôle d'exécution<br/><small>Que fait-on si une commande échoue ?</small></h2>
       <ul>
         <li><code>transaction(&block)</code></li>
         <li><code>on_rollback(&block)</code></li>
        </ul>
-<pre><code class="ruby"># Tâche DEPLOY: Exécute toutes les tâches nécessaires pour
-# déployer une nouvelle version de l'application
+<pre><code class="ruby"># Déployer une nouvelle version de l'application
 task :deploy do
   transaction do
     update_code
   end
 end
 
-# Place une nouvelle version du code dans un nouveau répertoire
+# Placer une nouvelle version du code dans un nouveau répertoire
 task :update_code do
   on_rollback do
     run "rm -rf #{release_path}"
@@ -408,11 +382,9 @@ cap deploy:update_code   # Copies your project to the remote servers.
         <li class="container">
           <pre class="console">[deploy_to]
 [deploy_to]/<strong>releases</strong>/20080819001122
-[deploy_to]/releases/20100819001122
 [deploy_to]/releases/...
 [deploy_to]/<strong>shared</strong>/...
-[deploy_to]/<strong>current</strong> -> [deploy_to]/releases/20100819001122</pre>
-        </li>
+[deploy_to]/<strong>current</strong> -> [deploy_to]/releases/20100819001122</pre></li>
         <li>Il faudra définir :</li>
         <li class="container"><ul>
           <li>La stratégie de déploiment</li>
@@ -462,13 +434,6 @@ namespace :deploy do
     run "custom commands here"
   end
 end</code></pre>
-
-      <aside class="notes">
-        <p>Copy : prepare code en local, compresse, transfert, décompresse</p>
-        <p>Checkout : un simple checkout (sur git, ça plante des clones partout)</p>
-        <p>Export : (sur git)comme checkout mais rm ensuite</p>
-        <p>RemoteCache : keep checkout, cp/rsync</p>
-      </aside>
 
     </section>
 
@@ -539,10 +504,6 @@ end</code></pre>
         </ul></li>
       </ul>
 
-      <aside class="notes">
-        <p>Capifony : Options : <code>:update_vendors</code>, partage des logs/uploads/..., </p>
-      </aside>
-
     </section>
 
     <section>
@@ -585,10 +546,6 @@ def mytask():
         </ul></li>
         <li>Et autres encore : <a href="http://controltier.org">Control Tier</a>, <a href="https://fedorahosted.org/func/">Func</a>, <a href="http://docs.puppetlabs.com/mcollective/">Mcollective</a></li>
       </ul>
-
-      <aside class="notes">
-        Control Tier : si vous devez controler l'ordre des commandes, lancements conditionnels (si sur un serveur j'ai XX alors je fais YYY),...
-      </aside>
 
     </section>
 

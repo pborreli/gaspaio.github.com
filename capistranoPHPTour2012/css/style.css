@@ -225,6 +225,10 @@ dl#base-elements dd{
   font-size: 0.9em;
 }
 
+section#execution-control ul > li {
+  margin-top: 0.2em;
+}
+
 section#composants > div {
   overflow: hidden;
 }
@@ -240,6 +244,10 @@ section#composants img {
 
 section#deploy-tasks pre.console {
   line-height: 1.5em;
+}
+
+section#deploy-example pre {
+  height: ;
 }
 
 section#zeend img {
